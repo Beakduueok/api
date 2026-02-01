@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stripe Checker API</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        .header h1 {
+            font-size: 2.8rem;
+            color: #2d3748;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .header p {
+            color: #718096;
+            font-size: 1.1rem;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card h2 {
+            color: #2d3748;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .card h2 i {
+            color: #667eea;
+        }
+        
+        .api-endpoint {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .endpoint-url {
+            font-family: 'Monaco', 'Courier New', monospace;
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            word-break: break-all;
+            font-size: 0.9rem;
+            margin: 10px 0;
+        }
+        
+        .param-list {
+            list-style: none;
+            margin: 20px 0;
+        }
+        
+        .param-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .param-name {
+            font-weight: 600;
+            color: #2d3748;
+        }
+        
+        .param-value {
+            font-family: 'Monaco', 'Courier New', monospace;
+            color: #667eea;
+        }
+        
+        .test-form {
+            margin-top: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .test-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 16px 30px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .test-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+        
+        .test-btn:active {
+            transform: translateY(0);
+        }
+        
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+            animation: slideIn 0.5s ease;
+        }
+        
+        .result.success {
+            background: #c6f6d5;
+            color: #22543d;
+            border-left: 4px solid #38a169;
+        }
+        
+        .result.error {
+            background: #fed7d7;
+            color: #742a2a;
+            border-left: 4px solid #e53e3e;
+        }
+        
+        .result.pending {
+            background: #bee3f8;
+            color: #2a4365;
+            border-left: 4px solid #3182ce;
+        }
+        
+        .result h3 {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .examples {
+            margin-top: 30px;
+        }
+        
+        .examples h3 {
+            margin-bottom: 15px;
+            color: #2d3748;
+        }
+        
+        .example-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .example-link {
+            background: #edf2f7;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            color: #4a5568;
+            text-decoration: none;
+            transition: background 0.3s ease;
+        }
+        
+        .example-link:hover {
+            background: #e2e8f0;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: white;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        .response-example {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 0.85rem;
+            white-space: pre-wrap;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+        
+        .badge.get {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+        
+        .badge.live {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-shield-alt"></i> Stripe Checker API</h1>
+            <p>High-performance credit card validation API for Stripe payment processing. Test cards instantly with real-time results.</p>
+        </div>
+        
+        <div class="content">
+            <div class="card">
+                <h2><i class="fas fa-code"></i> API Documentation</h2>
+                
+                <div class="api-endpoint">
+                    <div class="badge get">GET</div>
+                    <span class="badge live">LIVE ENDPOINT</span>
+                    
+                    <div class="endpoint-url" id="currentEndpoint">
+                        /api/check?gateway=autostripe&key=test&site=example.com&cc=4111111111111111|12|2025|123
+                    </div>
+                </div>
+                
+                <h3><i class="fas fa-list"></i> Parameters</h3>
+                <ul class="param-list">
+                    <li>
+                        <span class="param-name">gateway</span>
+                        <span class="param-value">autostripe</span>
+                    </li>
+                    <li>
+                        <span class="param-name">key</span>
+                        <span class="param-value">test</span>
+                    </li>
+                    <li>
+                        <span class="param-name">site</span>
+                        <span class="param-value">target-domain.com</span>
+                    </li>
+                    <li>
+                        <span class="param-name">cc</span>
+                        <span class="param-value">NUMBER|MM|YYYY|CVV</span>
+                    </li>
+                </ul>
+                
+                <h3><i class="fas fa-exchange-alt"></i> Response Format</h3>
+                <div class="response-example">
+{
+  "status": "Approved",
+  "response": "New Payment Method Added Successfully"
+}
+                </div>
+                
+                <div class="examples">
+                    <h3><i class="fas fa-bolt"></i> Quick Examples</h3>
+                    <div class="example-links">
+                        <a href="#" class="example-link" onclick="setExample(1); return false;">
+                            Test Card 1
+                        </a>
+                        <a href="#" class="example-link" onclick="setExample(2); return false;">
+                            Test Card 2
+                        </a>
+                        <a href="#" class="example-link" onclick="setExample(3); return false;">
+                            Declined Example
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2><i class="fas fa-flask"></i> API Tester</h2>
+                
+                <div class="test-form">
+                    <div class="form-group">
+                        <label for="site"><i class="fas fa-globe"></i> Target Website</label>
+                        <input type="text" id="site" placeholder="example.com" value="example.com">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cc"><i class="fas fa-credit-card"></i> Credit Card</label>
+                        <input type="text" id="cc" placeholder="4111111111111111|12|2025|123" value="4111111111111111|12|2025|123">
+                    </div>
+                    
+                    <button class="test-btn" onclick="testAPI()">
+                        <i class="fas fa-play"></i> Test API Now
+                    </button>
+                    
+                    <div class="result" id="result">
+                        <h3><i class="fas fa-spinner fa-spin"></i> Processing...</h3>
+                        <div id="resultContent"></div>
+                    </div>
+                </div>
+                
+                <div class="examples" style="margin-top: 30px;">
+                    <h3><i class="fas fa-history"></i> Recent Tests</h3>
+                    <div id="history"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>© 2024 Stripe Checker API | High Performance Credit Card Validation</p>
+            <p>Response Time: <span id="responseTime">--</span>ms</p>
+        </div>
+    </div>
+
+    <script>
+        let testHistory = [];
+        
+        function updateEndpoint() {
+            const site = document.getElementById('site').value;
+            const cc = document.getElementById('cc').value;
+            const endpoint = `/api/check?gateway=autostripe&key=test&site=${encodeURIComponent(site)}&cc=${encodeURIComponent(cc)}`;
+            document.getElementById('currentEndpoint').textContent = endpoint;
+        }
+        
+        function setExample(num) {
+            const examples = [
+                {site: 'example.com', cc: '4111111111111111|12|2025|123'},
+                {site: 'test-shop.com', cc: '4242424242424242|06|2026|789'},
+                {site: 'demo-store.com', cc: '4000000000000002|01|2024|321'}
+            ];
+            
+            const example = examples[num-1];
+            document.getElementById('site').value = example.site;
+            document.getElementById('cc').value = example.cc;
+            updateEndpoint();
+        }
+        
+        async function testAPI() {
+            const site = document.getElementById('site').value;
+            const cc = document.getElementById('cc').value;
+            const resultDiv = document.getElementById('result');
+            const resultContent = document.getElementById('resultContent');
+            
+            if (!site || !cc) {
+                alert('Please enter both site and credit card details');
+                return;
+            }
+            
+            // Update endpoint display
+            updateEndpoint();
+            
+            // Show loading state
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result pending';
+            resultDiv.innerHTML = '<h3><i class="fas fa-spinner fa-spin"></i> Processing Request...</h3><p>Checking card via Stripe API...</p>';
+            
+            const startTime = Date.now();
+            
+            try {
+                const response = await fetch(`/api/check?gateway=autostripe&key=test&site=${encodeURIComponent(site)}&cc=${encodeURIComponent(cc)}`);
+                const data = await response.json();
+                const endTime = Date.now();
+                const responseTime = endTime - startTime;
+                
+                document.getElementById('responseTime').textContent = responseTime;
+                
+                // Add to history
+                testHistory.unshift({
+                    site: site,
+                    cc: cc.replace(/\d{12}(\d{4})/, '************$1'),
+                    status: data.status,
+                    time: new Date().toLocaleTimeString(),
+                    responseTime: responseTime
+                });
+                
+                // Keep only last 5
+                testHistory = testHistory.slice(0, 5);
+                updateHistory();
+                
+                // Display result
+                if (data.status === 'Approved') {
+                    resultDiv.innerHTML = `
+                        <h3><i class="fas fa-check-circle"></i> APPROVED</h3>
+                        <p><strong>Response:</strong> ${data.response}</p>
+                        <p><strong>Time:</strong> ${responseTime}ms</p>
+                        <p><strong>Card:</strong> ${cc.replace(/\d{12}(\d{4})/, '************$1')}</p>
+                        <p><strong>Site:</strong> ${site}</p>
+                    `;
+                    resultDiv.className = 'result success';
+                } else if (data.status === 'Declined') {
+                    resultDiv.innerHTML = `
+                        <h3><i class="fas fa-times-circle"></i> DECLINED</h3>
+                        <p><strong>Response:</strong> ${data.response}</p>
+                        <p><strong>Time:</strong> ${responseTime}ms</p>
+                        <p><strong>Card:</strong> ${cc.replace(/\d{12}(\d{4})/, '************$1')}</p>
+                        <p><strong>Site:</strong> ${site}</p>
+                    `;
+                    resultDiv.className = 'result error';
+                } else {
+                    resultDiv.innerHTML = `
+                        <h3><i class="fas fa-exclamation-triangle"></i> ERROR</h3>
+                        <p><strong>Status:</strong> ${data.status}</p>
+                        <p><strong>Message:</strong> ${data.response}</p>
+                        <p><strong>Time:</strong> ${responseTime}ms</p>
+                    `;
+                    resultDiv.className = 'result error';
+                }
+                
+            } catch (error) {
+                const endTime = Date.now();
+                document.getElementById('responseTime').textContent = endTime - startTime;
+                
+                resultDiv.innerHTML = `
+                    <h3><i class="fas fa-exclamation-circle"></i> REQUEST FAILED</h3>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                    <p><strong>Time:</strong> ${endTime - startTime}ms</p>
+                    <p>Please check your connection and try again.</p>
+                `;
+                resultDiv.className = 'result error';
+            }
+        }
+        
+        function updateHistory() {
+            const historyDiv = document.getElementById('history');
+            if (testHistory.length === 0) {
+                historyDiv.innerHTML = '<p style="color: #718096; font-style: italic;">No tests yet</p>';
+                return;
+            }
+            
+            let html = '';
+            testHistory.forEach(item => {
+                const statusClass = item.status === 'Approved' ? 'badge get' : 'badge live';
+                html += `
+                    <div style="background: #f7fafc; padding: 10px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid ${item.status === 'Approved' ? '#38a169' : '#e53e3e'}">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                            <span class="${statusClass}">${item.status}</span>
+                            <span style="font-size: 0.8rem; color: #718096;">${item.time}</span>
+                        </div>
+                        <div style="font-size: 0.9rem;">
+                            <div><strong>Site:</strong> ${item.site}</div>
+                            <div><strong>Card:</strong> ${item.cc}</div>
+                            <div><strong>Time:</strong> ${item.responseTime}ms</div>
+                        </div>
+                    </div>
+                `;
+            });
+            historyDiv.innerHTML = html;
+        }
+        
+        // Initialize
+        document.getElementById('site').addEventListener('input', updateEndpoint);
+        document.getElementById('cc').addEventListener('input', updateEndpoint);
+        updateEndpoint();
+        updateHistory();
+    </script>
+</body>
+</html>
