@@ -1,0 +1,51 @@
+{
+  "functions": {
+    "api/check.py": {
+      "maxDuration": 60,
+      "memory": 1024
+    }
+  },
+  "builds": [
+    {
+      "src": "api/check.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "public/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/check",
+      "destination": "/api/check"
+    },
+    {
+      "source": "/api/check",
+      "destination": "/api/check.py"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/public/$1"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type"
+        }
+      ]
+    }
+  ]
+}
